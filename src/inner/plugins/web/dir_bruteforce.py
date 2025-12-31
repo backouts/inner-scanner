@@ -3,13 +3,11 @@ from typing import Any, Dict, List
 from urllib.parse import urljoin
 import os
 
-import requests
-
 MODULE = {
     "id": "web/dir_bruteforce",
     "name": "Web Directory Bruteforce",
     "category": "web",
-    "description": "Discover common directories/files by trying wordlist paths.",
+    "description": "Discover common directories/files using a wordlist.",
     "transport": ["http"],
     "targets": ["url", "host"],
 
@@ -18,7 +16,7 @@ MODULE = {
             "type": "str",
             "required": False,
             "default": "",
-            "help": "기본 URL. 비우면 target.url 또는 http://target.host 를 사용"
+            "help": "기본 URL (비우면 target.url 또는 http://target.host 사용)"
         },
         "wordlist": {
             "type": "str",
@@ -30,25 +28,25 @@ MODULE = {
             "type": "int",
             "required": False,
             "default": 5,
-            "help": "HTTP timeout seconds"
+            "help": "HTTP 요청 타임아웃(초)"
         },
         "status_allow": {
             "type": "list[str]",
             "required": False,
             "default": ["200", "204", "301", "302", "307", "308", "401", "403"],
-            "help": "발견으로 취급할 HTTP 상태코드 목록 (문자열 리스트)"
+            "help": "발견으로 취급할 HTTP 상태코드 목록"
         },
         "max_hits": {
             "type": "int",
             "required": False,
             "default": 50,
-            "help": "최대 발견 개수(너무 많아지는 것 방지)"
+            "help": "최대 발견 개수 제한"
         },
         "dry_run": {
             "type": "bool",
             "required": False,
             "default": False,
-            "help": "true면 실제 요청 없이 시뮬레이션"
+            "help": "true면 실제 요청 없이 시뮬레이션만 수행"
         },
     },
 
@@ -56,14 +54,14 @@ MODULE = {
     "tags": ["web", "discovery", "bruteforce"],
 }
 
-
 def _infer_base_url(target: Dict[str, Any], opt_base: str) -> str:
+
     if opt_base and opt_base.strip():
         return opt_base.strip()
 
     if target.get("url"):
         u = str(target["url"]).strip()
-        if u.startswith("http://") or u.startswith("https://"):
+        if u.startswith(("http://", "https://")):
             return u
         return "http://" + u
 
@@ -89,10 +87,22 @@ def _read_wordlist(path: str) -> List[str]:
             words.append(s)
     return words
 
-
 def run(ctx: Dict[str, Any]) -> Dict[str, Any]:
-    target = (ctx.get("target") or {})
-    options = (ctx.get("options") or {})
+    """
+    ctx fields:
+      - target
+      - options
+      - clients["http"]
+      - artifacts (unused here)
+    """
+
+    target = ctx.get("target") or {}
+    options = ctx.get("options") or {}
+    clients = ctx.get("clients") or {}
+
+    http = clients.get("http")
+    if not http:
+        raise RuntimeError("http client not provided by core")
 
     base_url = _infer_base_url(target, options.get("base_url", ""))
     if not base_url:
@@ -102,19 +112,16 @@ def run(ctx: Dict[str, Any]) -> Dict[str, Any]:
             "status": "ERROR",
             "severity": "NONE",
             "title": "Base URL not available",
-            "description": "target.url 또는 target.host가 없어 base_url을 만들 수 없습니다.",
+            "description": "target.url 또는 target.host가 없어 base_url을 생성할 수 없습니다.",
             "evidence": [f"target={target}"],
             "recommendation": "targets set <id> url=... 또는 host=... 로 설정하세요.",
-            "references": MODULE.get("references", []),
-            "tags": MODULE.get("tags", []),
-            "meta": {"base_url": None},
-            # artifacts는 없음
+            "references": MODULE["references"],
+            "tags": MODULE["tags"],
+            "meta": {},
         }
 
-    wordlist_path = str(options.get("wordlist") or "").strip()
-    timeout = int(options.get("timeout", 5))
-    allow = options.get("status_allow") or []
-    allow_set = {str(x).strip() for x in allow}
+    wordlist_path = str(options.get("wordlist")).strip()
+    allow_set = {str(x) for x in (options.get("status_allow") or [])}
     max_hits = int(options.get("max_hits", 50))
     dry_run = bool(options.get("dry_run", False))
 
@@ -124,8 +131,6 @@ def run(ctx: Dict[str, Any]) -> Dict[str, Any]:
     evidence: List[str] = [
         f"base_url={base_url}",
         f"wordlist={wordlist_path}",
-        f"timeout={timeout}",
-        f"allow={sorted(list(allow_set))}",
         f"max_hits={max_hits}",
         f"dry_run={dry_run}",
     ]
@@ -140,43 +145,42 @@ def run(ctx: Dict[str, Any]) -> Dict[str, Any]:
             continue
 
         try:
-            r = requests.get(full, timeout=timeout, allow_redirects=False)
+            r = http.get(full, allow_redirects=False)
             code = str(r.status_code)
+
             if code in allow_set:
                 hits.append(full)
                 evidence.append(f"HIT {code} {full}")
-        except requests.RequestException as e:
+
+        except Exception as e:
             evidence.append(f"ERR {full} {type(e).__name__}")
 
     status = "PASS"
     severity = "NONE"
     title = "No interesting paths found"
-    desc = "리스트 기반으로 디렉터리/파일 스캔을 시도했으나 유의미한 응답을 찾지 못했습니다."
+    description = "디렉터리/파일 후보를 발견하지 못했습니다."
 
     if dry_run:
         status = "INFO"
         title = "Dry-run completed"
-        desc = "dry_run=true 이므로 실제 요청 없이 종료했습니다."
+        description = "dry_run=true 이므로 실제 요청 없이 종료했습니다."
 
     if hits:
         status = "INFO"
         title = f"Found {len(hits)} candidate paths"
-        desc = "디렉터리/파일 후보를 발견했습니다. 후속 모듈(백업파일/설정노출/디렉터리리스팅 등)에서 재검증하세요."
+        description = "후속 모듈에서 발견된 경로를 재검증하세요."
 
     result: Dict[str, Any] = {
         "module_id": MODULE["id"],
         "target_id": target.get("id"),
-
         "status": status,
         "severity": severity,
-
         "title": title,
-        "description": desc,
+        "description": description,
         "evidence": evidence,
-        "recommendation": "발견된 경로에 대해 민감정보 노출/설정파일/백업파일/권한오류 등을 후속 점검하세요.",
-
-        "references": MODULE.get("references", []),
-        "tags": MODULE.get("tags", []),
+        "recommendation": "발견된 경로에 대해 설정 파일, 백업 파일, 권한 문제를 점검하세요.",
+        "references": MODULE["references"],
+        "tags": MODULE["tags"],
         "meta": {
             "base_url": base_url,
             "hits": len(hits),
