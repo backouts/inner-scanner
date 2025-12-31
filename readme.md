@@ -22,6 +22,7 @@
 
 MODULE은 모듈의 정적 정보와 옵션 정의를 담는 딕셔너리입니다. 코어(scanner)는 이 정보를 사용해 모듈을 로딩, 선택, 검증합니다. 💦
 
+```
 MODULE = {
 "id": "example/test",
 "name": "Example Test Module",
@@ -33,6 +34,7 @@ MODULE = {
 "references": [...],
 "tags": [...],
 }
+```
 
 ### 2.1 주요 필드 상세
 
@@ -49,14 +51,16 @@ MODULE = {
 
 모듈이 사용하는 모든 옵션은 MODULE["options"]에 선언해야 합니다.
 
+```
 "options": {
-"message": {
-"type": "str",
-"required": True,
-"default": "",
-"help": "Any message to include in the result."
+    "message": {
+        "type": "str",
+        "required": True,
+        "default": "",
+        "help": "Any message to include in the result."
+        }
 }
-}
+```
 
 ### 옵션 필드 설명
 
@@ -65,7 +69,8 @@ MODULE = {
 - **default**: 기본값
 - **help**: options show 시 출력되는 설명
 
-⚠️ **중요**: required=True인데 값이 없으면 코어가 실행 전에 차단합니다. 모듈 내부에서는 별도의 옵션 검증을 하지 않습니다. 😈
+⚠️ **중요**: required=True인데 값이 없으면 코어가 실행 전에 차단합니다.  
+모듈 내부에서는 별도의 옵션 검증을 하지 않습니다.
 
 ---
 
@@ -95,21 +100,23 @@ ctx는 딕셔너리이며, 다음 키를 가질 수 있습니다.
 
 ## 5. 반환 Result 구조
 
-run()은 반드시 다음의 표준 Result 딕셔너리를 반환해야 합니다. 💕
+run()은 반드시 다음의 표준 Result 딕셔너리를 반환해야 합니다.
 
+```
 return {
-"module_id": MODULE["id"],
-"target_id": target.get("id"),
-"status": "INFO",
-"severity": "NONE",
-"title": "...",
-"description": "...",
-"evidence": [...],
-"recommendation": "...",
-"references": [...],
-"tags": [...],
-"meta": {...}
+    "module_id": MODULE["id"],
+    "target_id": target.get("id"),
+    "status": "INFO",
+    "severity": "NONE",
+    "title": "...",
+    "description": "...",
+    "evidence": [...],
+    "recommendation": "...",
+    "references": [...],
+    "tags": [...],
+    "meta": {...}
 }
+```
 
 ### 주요 필드 설명
 
