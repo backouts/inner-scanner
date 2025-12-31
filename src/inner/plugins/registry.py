@@ -1,8 +1,7 @@
 import importlib
 
 MODULE_PATHS = [
-    "inner.plugins.example",
-    "inner.plugins.example_test",
+    "inner.plugins.web.dir_bruteforce",
 ]
 
 def load_modules():

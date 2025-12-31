@@ -27,3 +27,8 @@ node_modules/
 __pychache__/
 *.py[cod]
 *$py.class
+
+src/inner_scanner.egg-info/
+
+data/targets.json
+data/results.jsonl

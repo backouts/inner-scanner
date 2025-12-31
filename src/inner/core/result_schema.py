@@ -94,3 +94,5 @@ def validate_result(result: Dict[str, Any]) -> None:
     if "tags" in result:
         if not all(isinstance(x, str) for x in result["tags"]):
             raise ResultSchemaError("tags must be list[str]")
+    if "artifacts" in result and not isinstance(result["artifacts"], dict):
+        raise ResultSchemaError("artifacts must be dict")

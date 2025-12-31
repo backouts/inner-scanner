@@ -1,6 +1,7 @@
 from rich.console import Console
 from inner.core.result_schema import validate_result, ResultSchemaError
 from inner.core.storage.result_store import ResultStore
+from inner.core.clients.http import HttpClient
 
 console = Console()
 
@@ -29,14 +30,19 @@ def register(scanner, state):
         console.print(f"[bold cyan][*] running module {mid}[/bold cyan]")
 
         store = ResultStore()
+        http_client = HttpClient(
+            timeout=opts.get("timeout", 5),
+        )
 
         ctx = {
             "target": target,
             "options": opts,
-            "clients": {},
             "artifacts": store.aggregate_artifacts(target_id) if target_id else {},
             "meta": {
                 "module_id": mid,
+            },
+            "clients": {
+                "http": http_client
             },
         }
 
