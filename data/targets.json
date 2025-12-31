@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "targets": [
+    {
+      "id": "0",
+      "type": "host",
+      "host": "192.168.0.1",
+      "url": null,
+      "tags": [],
+      "auth": {
+        "ssh": null,
+        "http": null
+      },
+      "meta": {
+        "note": null,
+        "os_guess": null
+      }
+    },
+    {
+      "id": "1",
+      "type": "host",
+      "host": "192.168.0.2",
+      "url": null,
+      "tags": [],
+      "auth": {
+        "ssh": null,
+        "http": null
+      },
+      "meta": {
+        "note": null,
+        "os_guess": null
+      }
+    },
+    {
+      "id": "2",
+      "type": "url",
+      "host": "192.168.0.3",
+      "url": "www.test.com",
+      "tags": [],
+      "auth": {
+        "ssh": null,
+        "http": null
+      },
+      "meta": {
+        "note": null,
+        "os_guess": null
+      }
+    },
+    {
+      "id": "4",
+      "type": "url",
+      "host": "test.ll",
+      "url": "test.com",
+      "tags": [],
+      "auth": {
+        "ssh": null,
+        "http": null
+      },
+      "meta": {
+        "note": null,
+        "os_guess": null
+      }
+    },
+    {
+      "id": "asd",
+      "type": "url",
+      "host": "asd",
+      "url": "d",
+      "tags": [],
+      "auth": {
+        "ssh": null,
+        "http": null
+      },
+      "meta": {
+        "note": null,
+        "os_guess": null
+      }
+    }
+  ]
+}

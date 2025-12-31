@@ -1,0 +1,29 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.*
+
+# Build
+target/
+build/
+dist/
+out/
+
+# Dependency cache
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+__pychache__/
+*.py[cod]
+*$py.class
